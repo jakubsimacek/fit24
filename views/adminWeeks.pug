@@ -1,0 +1,35 @@
+extends layout
+
+block content
+  h2 Týdny
+
+  a(href="/admin/tyden/novy")
+    input(type="submit",name="add_week",value="Add")
+
+  .form
+    form(action="/admin/weeks",method="post")
+      table(border=2)
+        thead
+          tr
+            td Název týdne
+            td Start týdne
+            td Počet termínů
+            td Počet sekcí
+            td Kapacita
+            td Počet přihlášených
+            td Počet rezervací
+            td Poznámky
+            td Stav
+        each week in weeks
+          tr
+            td
+              a(href="/admin/tyden/" + week.name + "/editor")= week.name
+            td= week.startDate
+            td= week.noTerms 
+            td= week.noSections 
+            td= week.capacity 
+            td= week.noBookings 
+            td= week.noReservations 
+            td= week.description 
+            td= week.state 
+

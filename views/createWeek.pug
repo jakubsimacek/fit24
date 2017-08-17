@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  h2 Týdny
+
+  .form
+    form(action="/admin/tyden/novy",method="post")
+      .field
+        span Začátek týdne
+        input(type="text",name="weekStartDate")
+      .field
+        span Volitelný popis
+        input(type="text",name="weekDescription")
+      .button
+        input(type="submit",name="create",value="Vytvořit")
+

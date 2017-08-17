@@ -1,0 +1,218 @@
+table,tbody,tr,td,div,span {
+    margin: 0px;
+}
+
+body {
+    /* font: 14px Helvetica, Arial, sans-serif; */
+    /* font-size: 0.9; */
+    /*width: 1005px; */
+    /* margin: 20px 0px 0px 30px; */
+    margin: 20px 10px 0px;
+    background: #ddffcc;
+}
+
+header {
+    width: 100%;
+}
+
+#headline {
+    float: right;
+    background: #ccffb3;
+    padding: 20px;
+}
+
+#is-admin {
+    padding: 0px 0px 0px 10px;
+}
+
+#logout {
+    padding: 0px 10px 0px 10px;
+}
+
+#main-table {
+    border: 1px solid;
+    border-collapse: collapse;
+    background: #ccffb3;
+    position: relative;
+}
+
+#main-table a:link {
+    text-decoration: none;
+    color: #194d00;
+}
+
+tr {
+    height: 80px;
+   
+}
+
+.cell {
+    /* padding: 0.4em; */
+    float: left;
+    position: absolute;
+    /* top: 0px; */
+}
+
+.day {
+    padding: 0 15px;
+    border: 2px solid;
+    width: 50px;
+    text-transform: uppercase;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.ruler {
+    height: 30px;
+}
+
+.grid {
+    position: absolute;
+    padding: 5px 0px 0px 5px;
+    /* vertical-align: middle; */
+    border-left-style: dotted;
+    border-left-width: 1px;
+    height: 425px;
+    /* border-collapse: collapse; */
+    top: 0px;
+}
+
+.grid-gap {
+    border-left-style: dashed;
+}
+
+.timeline {
+    border: 2px solid;
+    /* position: relative; */
+    padding-right: 10px;
+/*    width: 878; */
+}
+
+.inline {
+    display: inline-block;
+}
+
+/* .term-wrap { */
+/*     /\* padding: 0.5em; *\/ */
+/*     width: 180px; */
+/* } */
+
+.term {
+    text-decoration: none;
+    margin: 3px;
+    padding: 3px;
+    border-style: solid;
+    border-width: 2px;
+    width: 170px;
+    height: 62px;
+    /* backgroud: tan; */
+/*     position: absolute; */
+    /*     top: 0em; */
+    /* z-index: 100; */
+     background-color: #ddffcc;
+}
+
+/* .term:active { */
+/*     background-color: #ffe6e6; */
+/* } */
+
+
+.not-active-link {
+   pointer-events: none;
+   cursor: default;
+}
+
+.term:hover { 
+    background-color: #bbff99;
+    border-width: 4px;
+    margin: 1px;
+}
+
+.line1 {
+    text-align: center;
+    text-decoration: none;
+    font-size: 90%;
+}
+
+.line2 {
+    text-align: center;
+    height: 16px;
+    margin-bottom: 7px;
+    font-size: 90%;
+}
+
+.text {
+    text-decoration: none;
+    font-size: 100%;
+}
+
+.time {
+    width: 40px;
+    font-size: 90%;
+}
+
+.occupancy {
+    width: 25px;
+    margin-left: 10px;
+    text-align: center;
+    font-size: 80%;
+}
+
+.name {
+    width: 37%;
+    float: right;
+    text-align: right;
+}
+
+.passed {
+    border-color: orange;
+}
+
+.saturated {
+    border-color: red;
+}
+
+.booked {
+    border-color: green;
+}
+
+.partially-booked {
+    border-color: cyan;
+}
+
+.available {
+    border-color: blue;
+}
+
+.reserved {
+    border-color: magenta;
+}
+
+.legend {
+    text-decoration: none;
+    text-align: center;
+    margin: 3px;
+    padding: 3px;
+    border-style: solid;
+    border-width: 2px;
+    width: 140px;
+    height: 62px;
+}
+
+.legend p {
+    margin: 0px;
+    padding: 5px 0px 0px 0px;
+    height: 1em;
+    font-size: 80%;
+   
+}
+
+#booking-table {
+    border: 1px solid;
+    border-collapse: collapse;
+}
+
+#booking-table td {
+    padding: 10px;
+    border: 1px solid;
+}

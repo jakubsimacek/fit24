@@ -1,0 +1,181 @@
+extends layout
+
+block content
+  header
+    p#headline Uživatel: #{session.userName}
+      if testParams.isAdmin == true
+        span#is-admin (admin)
+      a#logout(href="/logout") Odhlásit
+  h1= title
+  section
+    h2= data.description
+    table#main-table(style = "width: " + data.weekDisplayProps.tableWidth + "px;")
+      tbody
+        tr.ruler
+          td.day den
+          td.timeline
+            each rule in data.weekDisplayProps.ruler
+              .cell.inline.grid(class=rule.gap ? "grid-gap" : "", style="left: " + rule.left + "px;") #{rule.time}
+        each day in data.days
+          tr
+            td.day #{day.day}
+            td.timeline
+              if day.terms
+                each term in day.terms
+                  .cell.inline.term(class=term.viewData.state, style="left: " + term.left + "px; top: " + term.top + "px;")
+                    if session.isAdmin == false && term.viewData.state == "passed"
+                      -var v_cls = "not-active-link"
+                      -var v_href = ""
+                    else
+                      -var v_cls = ""
+                      -var v_href = "/cviceni/" + data._id + "/" + term.id + "#dole"
+                    a.text(class=v_cls, href=v_href)
+                      .line1 #{term.line1}
+                      .line2 #{term.line2}
+                      .line3
+                      span.text #{term.start}
+                      span.occupancy #{term.viewData.occupancy}
+                      span.name #{term.coach}
+     
+    section
+      if session.isEdit
+        #edit-pane 
+          form(method=post)
+            .new-term
+              .term-start
+                label Začátek
+                input(type="text" name="termStart")
+              .term-suration
+                label Délka
+                input(type="text" name="termDuration")
+              .term-suration
+                label Popisek horní řádek
+                input(type="text" name="termText1")
+              .term-suration
+                label Popisek dolní řádek
+                input(type="text" name="termText2")
+              .term-suration
+                label Trenér
+                input(type="text" name="termCoach")
+              .term-suration
+                label Den
+                input(type="text" name="termDay")
+              .term-submit
+                button(type="submit" name="termSubmit") Přidej termín
+            .intervals
+              table
+                each interval in editor.intervals    
+                  .interval
+                    .interval-start
+                      td Začátek intervalu
+                      td
+                        input(type="text" name="intervalStart" + interval.index)
+                      td= interval.minStart
+                      td= interval.maxStart
+                      td
+                        if interval.hasDelete
+                          button(type="submit" name="intervalDelete" + interval.index)
+                      td
+                    .interval-end
+                      td Konec intervalu
+                      td
+                        input(type="text" name="intervalEnd" + interval.index)
+                      td= interval.minEnd
+                      td= interval.maxEnd
+                      td
+                        if interval.hasMerge
+                          button(type="submit" name="intervalMerge" + interval.index)
+                      td
+                        if interval.hasAdd
+                          button(type="submit" name="intervalAdd" + interval.index)
+              button(type="submit" name="intervalSave) Uložit 
+            .enabled
+              label Aktivní
+              input(type="checkbox" name="enabled")
+            .lock
+              span Uzamčeno v #{editor.lockedAt} uživatelem #{editor.lockedBy}
+          button(type="reset" name="reset") Znovu
+    section
+      h3 Legenda
+      div
+        .inline.legend.available
+          p Volno
+          p V
+        .inline.legend.saturated
+          p Obsazeno
+          p -
+        .inline.legend.booked
+          p Rezervováno
+          p V/R/Ž
+        .inline.legend.reserved
+          p Náhradník
+          p Č
+        .inline.legend.partially-booked
+          p Částečný náhradník
+          p R/Č
+        .inline.legend.passed
+          p Proběhlo
+          p -
+      p Symboly V, R, Č, Ž zastupojí počet míst: V ... volných; R ... tebou rezervovaných; Č ... na čekací listině, Ž ... žádost o zrušení</p>
+      if curTerm
+        if session.isAdmin
+          h3 Detail termínu #{curTerm.time}
+          if curTerm.booked
+            h4 Přihlášení
+            table#booking-table
+              each person in curTerm.booked
+                tr
+                  td= person.userName
+                  td= person.count
+          else
+            h4 Zatím nikdo nepřihlášen
+        else
+          a(name="dole")
+          //-h3 Změna rezervace na #{curTerm.time} #{curTerm.viewData.state}
+          form(method='POST' action="/update")
+            case curTerm.viewData.state
+              when "available"
+                h3 Rezervuj si místo/a
+                label(for="toBook") Počet míst k rezervaci
+                select(name="toBook")
+                  option(selected="yes") 1
+                  - for (var idx = 2; idx <= curTerm.viewData.available; idx++)
+                    option= idx
+                button(type="submit" name="book") Rezervuj
+              when "saturated"
+                h3 Přihlaš se na čekací místo/a
+                label(for="toBook") Počet míst
+                select(name="toReserve")
+                  option(selected="yes") 1
+                  - for (var idx = 2; idx <= 7; idx++)
+                    option= idx
+                button(type="submit" name="zkus") Zkus
+                if curTerm.numReserved > 0
+                  if curTerm.numReserved == 1
+                    h5 Máš zarezervované jedno místo
+                  else
+                    if curTerm.numReserved >= 5
+                      h5 Máš zarezervovaných #{curTerm.numReserved} míst
+                    else
+                      h5 Máš zarezervované #{curTerm.numReserved} místa
+                  button(type="submit" name="odeber") Odeber
+                  p V závislosti na okolnostech ti možná nedovolíme nepřijít, uvidíme :-)
+              when "booked"
+                h3 Změna rezervace - žádost o zrušení rezervace
+                label(for="toCancel") Počet míst ke zrušení
+                select(name="toCancel")
+                  option(selected="yes") 1
+                  - for (var idx = 2; idx <= curTerm.viewData.youBooked; idx++)
+                    option= idx
+                button(type="submit" name="cancelBooking") Zruš rezervaci
+              when "reserved"
+                h3 Zrušení míst/a na čekací listině
+                label(for="toUnreserve") Počet míst ke zrušení
+                select(name="toUnreserve")
+                  option(selected="yes") 1
+                  - for (var idx = 2; idx <= curTerm.viewData.youReserved; idx++)
+                    option= idx
+                button(type="submit" name="unreserve") Zruš čekání
+    hr
+    footer
+      a(href='http://www.cesta-ke-zmene.cz/',target='_blank') Mgr. Hanka Nováková - Cesta ke změně

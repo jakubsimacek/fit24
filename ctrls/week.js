@@ -1,6 +1,70 @@
 const Week = require('../models/week');
+const Account = require('../models/account');
 const util = require('../util');
 const formatDate = require('format-date');
+const CircularJSON = require('circular-json');
+
+const timePadding = 15;  // adds minutes after and before each term to calculate intervals
+
+// converts string "14:45" into 14.45, ...
+function timeToDec(timeStr) {
+  const tParts = timeStr.split(":");
+  const hh = partseInt(tParts[0], 10);
+  const mm = partseInt(tParts[1], 10);
+  return hh * (mm/100);
+}
+
+// function adds the specified number of minutes to baseTime
+function addToTime(baseTime, minutes) {
+  const baseHours = Math.floor(baseTime);
+  const baseMins = (baseTime - baseHours) * 100;
+  const addHours = Math.floor(minutes / 60);
+  const addMins = minutes - addHours * 60;
+  const intermAdd = baseMins + addMins;
+  if (intermAdd >= 60) {
+    intermAdd -= 60;
+    addHours += 1;
+  }
+  return baseHours + addHours + (intermAdd / 100);
+}
+
+// function subtracts the specified number of minutes from baseTime
+function subFromTime(baseTime, minutes) {
+  const baseHours = Math.floor(baseTime);
+  const baseMins = (baseTime - baseHours) * 100;
+  const subtractHours = Math.floor(minutes / 60);
+  const subtractMins = minutes - subtractHours * 60;
+  const intermAdd = baseMins - addMins;
+  if (intermAdd < 0) {
+    intermAdd -= 60;
+    addHours -= 1;
+  }
+  return baseHours + addHours + (intermAdd / 100);
+}
+
+function makeTimeOccupation(week) {
+  let arrFree = [ { start : 4.00, end : 22.00 }];
+  week.days.map(d => { 
+    d.terms.map(t => {
+      const start = subFromTimeToDec(t.start, timePadding);
+      const end = (t.end) ? addToTime(timeToDec(t.end), timePadding) : addToTime(start, defaultDuration + timePadding);
+      const tempMap = arrFree.map(free => {
+        // narrowing free interval from left
+        if (free.start <= end && free.start > start)
+          return { start : end, free.end };
+        else if (free.end >= start && free.end < end)
+          return { start : free.start, end : start };
+        else if (free.start < start && free.end > end)
+          return [{ start : free.start, end : start}, { start : end, end : free.end }];
+        return { start : free.start, end : free.end };
+      }
+      arrFree = [].concat.apply([], tempMap).filter(free => {
+        return free.end > free.start + 1; // free interval valid and at least +1 hour wide
+      };
+    };
+  };
+  return arrF]ree;
+}
 
 function add(a, b) {
   return a + b;
@@ -8,7 +72,7 @@ function add(a, b) {
 
 function formatCzDate(date) {
 console.log(date.constructor.name);
-  return formatDate('{day}. {month}. {year}', date);
+  return formatDate('{day}.{month}.{year}', date);
 }
 
 //router.get('/admin/tyden/novy', 
@@ -107,12 +171,69 @@ module.exports.postCreateWeek = function (req, res) {
 
 //router.get('/admin/tyden/:week/editor', 
 module.exports.getWeekEditor = function (req, res) {
-  Week.findOne({ startDate: req.params.week }, (err, week) => {
+  console.log(':week=' + CircularJSON.stringify(req.params.week));
+  Week.findById(req.params.week, (err, week) => {
    if (err)
      util.renderr(res, 'Nemuzu najit tyden', error);
-   else
-     res.render('cviceni', {user: req.user, session: { userName: req.user.username, isAdmin: true },
+   else {
+     console.log('admin tyden ' + week);
+     // coaches
+     // blocks
+     // acquire lock
+     // lock
+     // selected term
+     //   booked
+     //   reserved
+     //   cancelling
+     //
+     //   new term/edit term
+     //     start
+     //     duration
+     //     text 1
+     //     text 2
+     //     coach
+     //     day
+     //
+     //   enabled (week) will be visible - add to list view
+     //
+     //   blocks
+     //     start time (min, max) [remove]
+     //     end time (min, max)
+     //
+     //     gap (min, max) [remove]
+     //     
+     //     start
+     //     end time ....
+     //     [add block]
+     //     may be insert block???
+     //     actions: insert, add, delete, resize
+     const intervals = {
+     };
+     //
+     //   locked at ...
+     //   locked by ...
+     //
+     //   [release lock]
+     //
+     //   [reset]
+     //
+     //   [save]
+     //
+     //   booked
+     //     name
+     //     number
+     //     [remove]
+     //
+     //   dto reserved
+     //
+     //   save buttons for each block
+     const editor = { 
+       intervals: intervas
+     };
+
+     res.render('cviceni', {user: req.user, session: { userName: req.user.username, isAdmin: true, editor: editor},
        testParams: true, data: week});
+   }
   });
 }
 
@@ -123,6 +244,7 @@ module.exports.getAdminWeeks = function (req, res) {
     if (err)
       render('error', { user: req.user, error: err });
     else {
+console.log('weeks:' + weeks);
       let aggWeeks = weeks.map(w => {
         const noTerms = w.days.map(d => (d.terms) ? d.terms.length : 0).reduce(add, 0);
         const noSections = w.weekDisplayProps.intervals.length;
@@ -151,7 +273,8 @@ module.exports.getAdminWeeks = function (req, res) {
             return 0;
         }).reduce(add, 0); 
         console.log(noTerms);
-        return { name: w.name,
+        return { id: w._id,
+                 name: w.name,
                  startDate: formatCzDate(w.startDate),
                  noTerms: noTerms,
                  noSections: noSections,

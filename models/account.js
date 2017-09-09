@@ -3,7 +3,7 @@ var mongoose = require('mongoose'),
   passportLocalMongoose = require('passport-local-mongoose');
 
 // username, password, salt are added automatically by passport-local-mongoose plugin
-var Account = new Schema({
+var accountSchema = new Schema({
   fullname: String,
   createddate: {
     type: Date, 
@@ -23,9 +23,13 @@ var Account = new Schema({
   lastLogin: Date
 });
 
-Account.plugin(passportLocalMongoose, {
+accountSchema.statics.findCoaches = function (cb) {
+  return this.find({ roles: 'coach'}, cb);
+};
+
+accountSchema.plugin(passportLocalMongoose, {
   lastLoginField: 'lastLogon',
   attemptsField: 'attempts'
 });
 
-module.exports = mongoose.model('Account', Account);
+module.exports = mongoose.model('Account', accountSchema);

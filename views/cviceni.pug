@@ -8,7 +8,7 @@ block content
       a#logout(href="/logout") Odhlásit
   h1= title
   section
-    h2= data.description
+    h2= data.name
     table#main-table(style = "width: " + data.weekDisplayProps.tableWidth + "px;")
       tbody
         tr.ruler
@@ -36,7 +36,6 @@ block content
                       span.text #{term.start}
                       span.occupancy #{term.viewData.occupancy}
                       span.name #{term.coach}
-     
     section
       if session.isEdit
         #edit-pane 
@@ -88,14 +87,14 @@ block content
                       td
                         if interval.hasAdd
                           button(type="submit" name="intervalAdd" + interval.index)
-              button(type="submit" name="intervalSave) Uložit 
+              button(type="submit" name="intervalSave") Uložit 
             .enabled
               label Aktivní
               input(type="checkbox" name="enabled")
             .lock
               span Uzamčeno v #{editor.lockedAt} uživatelem #{editor.lockedBy}
           button(type="reset" name="reset") Znovu
-    section
+    section 
       h3 Legenda
       div
         .inline.legend.available
@@ -131,7 +130,7 @@ block content
             h4 Zatím nikdo nepřihlášen
         else
           a(name="dole")
-          //-h3 Změna rezervace na #{curTerm.time} #{curTerm.viewData.state}
+          h3 Změna rezervace na #{curTerm.time} #{curTerm.viewData.state}
           form(method='POST' action="/update")
             case curTerm.viewData.state
               when "available"
@@ -178,4 +177,5 @@ block content
                 button(type="submit" name="unreserve") Zruš čekání
     hr
     footer
-      a(href='http://www.cesta-ke-zmene.cz/',target='_blank') Mgr. Hanka Nováková - Cesta ke změně
+      a(href="http://www.cesta-ke-zmene.cz/",target="_blank") Mgr. Hanka Nováková - Cesta ke změně
+

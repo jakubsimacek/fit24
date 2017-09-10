@@ -1,4 +1,4 @@
-const Membership = require('../models/membership');
+//const Membership = require('../models/membership');
 
 const model = { 
   groups: [{
@@ -78,7 +78,7 @@ const model = {
   }]
 }
 
-const m = new Membership(model);
+//const m = new Membership(model);
 /*
 console.log('1', m.isMemberOf('karel', [ 'ndc' ]));
 console.log('1', m.isMemberOf('jakub', [ 'americka' ]));
@@ -90,6 +90,6 @@ console.log('===============================');
 //console.log('1', m.isMemberOf('testovic', [ 'americka' ]));
 
 //console.log('getGroupTree: ', m.getGroupTree('test'));
-console.log('getGroupTree:\n', JSON.stringify(m.getGroupTree('test'), null, 2));
+//console.log('getGroupTree:\n', JSON.stringify(m.getGroupTree('test'), null, 2));
 
 

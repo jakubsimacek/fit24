@@ -9,7 +9,11 @@ module.exports.renderr = function (res, message, error, data) {
   res.render('error', { message: message, error: error, data: data });
 }
 
+let dateToTimeStr = function (date) {
+  return date.toISOString().substring(11, 16)
+}
 
+module.exports.dateToTimeStr = dateToTimeStr;
 // converts string "14:45" into 14.45, ...
 /*
 let timeToDec = function (timeStr) {
@@ -20,10 +24,10 @@ let timeToDec = function (timeStr) {
 }
 module.exports.timeToDec = timeToDec;
 */
-let timeToDate = function (timeStr) {
-  return new Date('1970-01-01T' + baseTime + ':00.000Z')
+let timeStrToDate = function (timeStr) {
+  return new Date('1970-01-01T' + timeStr + ':00.000Z')
 }
-module.exports.timeToDec = timeToDec;
+module.exports.timeStrToDate = timeStrToDate;
 
 // function adds the specified number of minutes to baseTime
 let addToTime = function (baseTime, minutes) {
@@ -60,39 +64,39 @@ let subFromTime = function (baseTime, minutes) {
 //  return Math.round(baseHours - subtractHours - (intermSub / 100), -2);
   return Number(baseHours - subtractHours + (intermSub / 100)).toFixed(2);
 */
-  return addToDate(baseTime, -minutes)
+  return addToTime (baseTime, -minutes)
 }
 module.exports.subFromTime = subFromTime;
 
 module.exports.makeTimeOccupation = function (week) {
-  let arrFree = [ { start : '04.00', end : '22.00' }];
-//console.log('top');
+  let arrFree = [ { startDate : timeStrToDate('04:00'), endDate : timeStrToDate('22:00') }];
+
   week.days.map(d => { //console.log('d: ' + CircularJSON.stringify(d));
     d.terms.map(t => { //console.log('t: ' + CircularJSON.stringify(t));
-      const start = subFromTime(timeToDate(t.start), timePadding);
-      const end = (t.end) ? addToTime(timeToDate(t.end), timePadding) : addToTime(start, defaultDuration + 2*timePadding);
-console.log('start: ' + start + ', end: ' + end);
-      const tempMap = arrFree.map(free => {console.log('free: ' + CircularJSON.stringify(free));
+      const startDate = subFromTime(timeStrToDate(t.startTime), timePadding);
+      const endDate = (t.endTime) ? addToTime(timeStrToDate(t.endTime), timePadding) : addToTime(startDate, defaultDuration + 2*timePadding);
+//console.log('startDate: ' + startDate + ', endDate: ' + endDate);
+      const tempMap = arrFree.map(free => {           //console.log('free: ' + CircularJSON.stringify(free));
         // narrowing free interval from left
-        if (free.start <= end && free.start >= start){console.log('1: ');
-          return { start : end, end : free.end };}
+        if (free.startDate <= endDate && free.startDate >= startDate){//console.log('1: ');
+          return { startDate : endDate, endDate : free.endDate };}
         // narrowing interval from right
-        else if (free.end >= start && free.end <= end){console.log('2: ');
-          return { start : free.start, end : start };}
+        else if (free.endDate >= startDate && free.endDate <= endDate){//console.log('2: ');
+          return { startDate : free.startDate, endDate : startDate };}
         // splitting interval
-        else if (free.start < start && free.end > end){console.log('3: ');
-          return [{ start : free.start, end : start}, 
-                  { start : end, end : free.end }];}
-        return { start : free.start, end : free.end };
+        else if (free.startDate < startDate && free.endDate > endDate){//console.log('3: ');
+          return [{ startDate : free.startDate, endDate : startDate}, 
+                  { startDate : endDate, endDate : free.endDate }] }
+        return { startDate : free.startDate, endDate : free.endDate }
       });
   //    console.log(CircularJSON.stringify(tempMap));
       arrFree = [].concat.apply([], tempMap).filter(free => {
-        return free.end > addToTime(free.start, 60); // free interval valid and at least +1 hour wide
-      });
-    });
-  });
+        return free.endDate > addToTime(free.startDate, 60); // free interval valid and at least +1 hour wide
+      })
+    })
+  })
   //console.log('ret: ' + CircularJSON.stringify(arrFree));
-  return arrFree;
+  return arrFree.map(t => { return { startTime : dateToTimeStr(t.startDate), endTime : dateToTimeStr(t.endDate) }}) 
 }
 
 /*

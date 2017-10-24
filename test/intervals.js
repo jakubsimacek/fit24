@@ -69,51 +69,51 @@ describe('test interval functions', function() {
 
   it('test intervals - empty', function() {
     let emptyWeek = { days : [ {terms : []}, { terms : []}]};
-    assert.deepEqual([{ startTime : '04:00', endTime : '22:00' }], util.makeTimeOccupation(emptyWeek));
+    assert.deepEqual([{ start : '04:00', end : '22:00' }], util.calculateFreeBlocks(emptyWeek));
   });
 
   it('test intervals - 1 term - split', function() {
-    let week = { days : [ {terms : [ { startTime : "14:00" } ]}, { terms : []}]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                         { startTime : '15:15', endTime : '22:00' }]);
+    let week = { days : [ {terms : [ { start : "14:00" } ]}, { terms : []}]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                         { start : '15:15', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - split+shift from left', function() {
-    let week = { days : [ { terms : [ { startTime : "14:00" } ]}, 
-                               { terms : [ { startTime : "14:15" } ]}]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                         { startTime : '15:30', endTime : '22:00' }]);
+    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
+                               { terms : [ { start : "14:15" } ]}]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                         { start : '15:30', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - gap removal', function() {
-    let week = { days : [ { terms : [ { startTime : "14:00" } ]}, 
-                               { terms : [ { startTime : "15:30" } ]}]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                         { startTime : '16:45', endTime : '22:00' }]);
+    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
+                               { terms : [ { start : "15:30" } ]}]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                         { start : '16:45', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap removal', function() {
-    let week = { days : [ { terms : [ { startTime : "14:00" } ]}, 
-                               { terms : [ { startTime : "16:25" } ]}]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                         { startTime : '17:40', endTime : '22:00' }]);
+    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
+                               { terms : [ { start : "16:25" } ]}]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                         { start : '17:40', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap not removal', function() {
-    let week = { days : [ { terms : [ { startTime : "14:00" } ]}, 
-                               { terms : [ { startTime : "16:35" } ]}]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                         { startTime : '15:15', endTime : '16:20' }, 
-                                                         { startTime : '17:50', endTime : '22:00' }]);
+    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
+                               { terms : [ { start : "16:35" } ]}]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                         { start : '15:15', end : '16:20' }, 
+                                                         { start : '17:50', end : '22:00' }]);
   });
 
   it('test intervals - 3 term - orange', function() {
-    let week = {      days : [ { terms : [ { startTime : "14:00" } ]}, 
-                               { terms : [ { startTime : "16:35" } ]},
-                               { terms : [ { startTime : "17:30" } ]} ]};
-    assert.deepEqual(util.makeTimeOccupation(week), [{ startTime : '04:00', endTime : '13:45' },
-                                                     { startTime : '15:15', endTime : '16:20' }, 
-                                                     { startTime : '18:45', endTime : '22:00' }]);
+    let week = {      days : [ { terms : [ { start : "14:00" } ]}, 
+                               { terms : [ { start : "16:35" } ]},
+                               { terms : [ { start : "17:30" } ]} ]};
+    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+                                                     { start : '15:15', end : '16:20' }, 
+                                                     { start : '18:45', end : '22:00' }]);
     //   f                f             x              f 
     //       13:45 - 15:15 16:20 - 17:50 17:15 - 18:45         occup.
      //  ok            ok            not-ok        ok
@@ -121,3 +121,263 @@ describe('test interval functions', function() {
 
 
 });
+
+describe('test interval intersection', function() {
+
+  it('test intervals - empty', function() {
+    let int = []
+    let free = []
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - left miss', function() {
+    let int = [{ start: '08:00', end: '09:00'}]
+    let free = [{ start: '18:00', end: '19:00'}]
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - left miss with touch', function() {
+    let int = [{ start: '08:00', end: '09:00'}]
+    let free = [{ start: '09:00', end: '10:00'}]
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - left intersec', function() {
+    let int = [{ start: '08:00', end: '09:00'}]
+    let free = [{ start: '08:00', end: '09:30'}]
+    assert.deepEqual([{ start: '08:00', end: '09:00'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - left intersec2', function() {
+    let int = [{ start: '08:00', end: '09:00'}]
+    let free = [{ start: '08:30', end: '09:30'}]
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - mid inner intersec', function() {
+    let int = [{ start: '08:00', end: '09:00'}]
+    let free = [{ start: '08:15', end: '08:45'}]
+    assert.deepEqual([{ start: '08:15', end: '08:45'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - mid outer intersec', function() {
+    let int = [{ start: '08:15', end: '08:45'}]
+    let free = [{ start: '08:00', end: '09:00'}]
+    assert.deepEqual([{ start: '08:15', end: '08:45'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - mid outer intersec - too short', function() {
+    let int = [{ start: '08:15', end: '08:16'}]
+    let free = [{ start: '08:00', end: '09:00'}]
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - right intersec - with touch', function() {
+    let int = [{ start: '08:30', end: '09:00'}]
+    let free = [{ start: '08:00', end: '09:00'}]
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - right intersec', function() {
+    let int = [{ start: '08:30', end: '09:30'}]
+    let free = [{ start: '08:00', end: '09:00'}]
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+  });
+
+  it('test intervals - right miss', function() {
+    let int = [{ start: '08:30', end: '09:30'}]
+    let free = [{ start: '09:30', end: '09:45'}]
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - right miss2', function() {
+    let int = [{ start: '08:30', end: '09:30'}]
+    let free = [{ start: '10:30', end: '10:45'}]
+    assert.deepEqual([], util.getIntersection(int, free));
+  });
+
+  it('test intervals - complex', function() {
+    let int = [{ start: '08:30', end: '09:30'},
+               { start: '10:30', end: '11:30'},
+               { start: '13:30', end: '17:30'},
+               { start: '19:30', end: '21:30'}]
+    let free = [{ start: '04:00', end: '08:00'},
+                { start: '10:30', end: '10:31'},
+                { start: '10:45', end: '14:00'},
+                { start: '14:30', end: '20:00'},
+                { start: '22:45', end: '22:00'}]
+    assert.deepEqual([{start: '10:45', end: '11:30'},
+                      {start: '13:30', end: '14:00'},
+                      {start: '14:30', end: '17:30'},
+                      {start: '19:30', end: '20:00'}], util.getIntersection(int, free));
+  });
+
+})
+
+describe('test interval boundaries', function() {
+  it('findBlock - simple', function() {
+    const start = util.timeStrToDate('08:00')
+    const end = util.timeStrToDate('09:00')
+    const time = util.timeStrToDate('08:30')
+    assert.deepEqual({ startDate: start, endDate: end }, 
+                     util.findBlock([{ startDate: start, endDate: end }], time))
+  })
+  it('test intervals - complex', function() {
+    let int = [{ start: '08:30', end: '11:30'},
+               { start: '13:30', end: '17:30'},
+               { start: '19:00', end: '21:30'}]
+    let free = [{ start: '04:00', end: '09:00'},
+                { start: '10:00', end: '10:30'},
+                { start: '11:00', end: '14:00'},
+                { start: '17:15', end: '19:45'},
+                { start: '21:00', end: '22:00'}]
+    assert.deepEqual([{minStart: '04:00', maxStart: '08:55', minEnd: '11:05', maxEnd: '12:00'},
+                      {minStart: '13:00', maxStart: '13:55', minEnd: '17:20', maxEnd: '17:30'},
+                      {minStart: '19:00', maxStart: '19:40', minEnd: '21:05', maxEnd: '22:00'}
+                   ], util.getIntervalBoundaries(int, free, 90));
+  });
+
+})
+
+describe('test day free blocks', function() {
+  it('test free blocks for a day - simple', function() {
+    let week = {  
+    days:[  
+      {  
+         day:'po',
+         terms:[  
+            {  
+               start:'08:00',
+               end:  '09:00'
+            }
+         ]
+      },
+      {  
+          day:'ut',
+          terms:[  
+            {  
+               start:'18:00'
+            }
+          ]
+        }
+      ]
+    }
+
+    assert.deepEqual(
+      [
+        { start: '04:00', end: '17:45' },
+        { start: '19:15', end: '22:00' }
+      ], util.calculateFreeBlocksForDay(week, 'ut'));
+  })
+
+  it('test free blocks for a day - more complex', function() {
+    let week = {  
+    days:[  
+      {  
+         day:'po',
+         terms:[  
+            {  
+               start:'08:00',
+               end:  '09:00'
+            }
+         ]
+      },
+      {  
+          day:'ut',
+          terms:[  
+            {  
+               start:'10:00',
+               end:  '11:15'
+            },
+            {  
+               start:'16:30'
+            },
+            {  
+               start:'18:00'
+            }
+          ]
+        }
+      ]
+    }
+
+    assert.deepEqual(
+      [
+        { start: '04:00', end: '09:45' },
+        { start: '11:30', end: '16:15' },
+        { start: '19:15', end: '22:00' }
+      ], util.calculateFreeBlocksForDay(week, 'ut'));
+  })
+
+  it('test free blocks for a week - complex', function() {
+    let week = {  
+   days:[  
+      {  
+         day:'po',
+         terms:[  
+            {  
+               start:'08:00',
+               end:  '09:00'
+            }
+         ]
+      },
+      {  
+          day:'ut',
+          terms:[  
+            {  
+               start:'18:00'
+            }
+          ]
+      }
+    ]
+}
+
+    assert.deepEqual(
+      [
+        {
+          day: 'po',
+          freeBlocks: [
+            { start: '04:00', end: '07:45' },
+            { start: '09:15', end: '22:00' }
+          ]
+        },
+        {
+          day: 'ut',
+          freeBlocks: [
+            { start: '04:00', end: '17:45' },
+            { start: '19:15', end: '22:00' }
+          ]
+        },
+        {
+          day: 'st',
+          freeBlocks: [
+            { start: '04:00', end: '22:00' }
+          ]
+        },
+        {
+          day: 'ct',
+          freeBlocks: [
+            { start: '04:00', end: '22:00' }
+          ]
+        },
+        {
+          day: 'pa',
+          freeBlocks: [
+            { start: '04:00', end: '22:00' }
+          ]
+        },
+        {
+          day: 'so',
+          freeBlocks: [
+            { start: '04:00', end: '22:00' }
+          ]
+        },
+        {
+          day: 'ne',
+          freeBlocks: [
+            { start: '04:00', end: '22:00' }
+          ]
+        }
+      ], util.calculateFreeBlocksForWeek(week));
+  })
+
+})

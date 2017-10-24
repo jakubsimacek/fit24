@@ -177,6 +177,23 @@ module.exports.getWeekEditor = function (req, res) {
      util.renderr(res, 'Nemuzu najit tyden', error);
    else {
      console.log('admin tyden ' + week);
+/* usecases:
+  delete interval: [must be empty]
+  change start of interval: {old start time; new start time}
+  change end of interval: {start time; new end time}
+  split interval: {start time; new end time, new start time}
+  join intervals: {start time of the 1st one, start time of the 2nd one}
+
+  add term
+  delete term {term id}
+  move term {term id; new term id} [[term id = DY_HH:MI (po_16:45)]]
+  update term {term id; line 1, line 2, coach ...}
+  add term booking {term id; person, number}
+  remove term booking {term id; person, number}
+  add term reservation {term id; person, number}
+  remove term reservation {term id; person, number}
+
+*/
      // coaches
      // blocks
      // acquire lock
@@ -196,7 +213,7 @@ module.exports.getWeekEditor = function (req, res) {
      //
      //   enabled (week) will be visible - add to list view
      //
-     //   blocks
+     //   blocks (intervals)
      //     start time (min, max) [remove]
      //     end time (min, max)
      //
@@ -207,8 +224,8 @@ module.exports.getWeekEditor = function (req, res) {
      //     [add block]
      //     may be insert block???
      //     actions: insert, add, delete, resize
-     const intervals = {
-     };
+//     const intervals = { };
+     const timeOccupation = util.calculateFreeBlocks(week)    
      //
      //   locked at ...
      //   locked by ...
@@ -228,14 +245,30 @@ module.exports.getWeekEditor = function (req, res) {
      //
      //   save buttons for each block
      const editor = { 
-       intervals: intervas
+//       intervals: intervals,
+       timeOccupation: timeOccupation
      };
 
-     res.render('cviceni', {user: req.user, session: { userName: req.user.username, isAdmin: true, editor: editor},
-       testParams: true, data: week});
+     res.render('cviceni', {user: req.user, 
+                            session: {
+                              userName: req.user.username, 
+                              isAdmin: true, 
+                              editor: editor
+                            },
+                            testParams: true, 
+                            data: week});
    }
   });
 }
+
+//router.post('/admin/tyden/:week/editor', 
+module.exports.postWeekEditor = function (req, res) {
+  // get submit button name
+  // switch what to do
+  // do it n times
+  res.render('not-impl', {user: req.user});
+}
+
 
 //router.get('/admin/tydny', 
 module.exports.getAdminWeeks = function (req, res) {
@@ -328,12 +361,6 @@ module.exports.getCopyWeek = function (req, res) {
 
 //router.post('/admin/tyden/:week/kopie', 
 module.exports.postCopyWeek = function (req, res) {
-
-  res.render('not-impl', {user: req.user});
-}
-
-//router.post('/admin/tyden/:week/editor', 
-module.exports.postWeekEditor = function (req, res) {
 
   res.render('not-impl', {user: req.user});
 }

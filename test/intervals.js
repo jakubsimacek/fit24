@@ -381,3 +381,83 @@ describe('test day free blocks', function() {
   })
 
 })
+
+describe('test regeneration of the ruler', function() {
+  it('gerRulerStartTime - 1', function() {
+    assert.deepEqual('09:00', util.gerRulerStartTime('09:00'))
+  })
+
+  it('gerRulerStartTime - 2', function() {
+    assert.deepEqual('09:00', util.gerRulerStartTime('09:29'))
+  })
+
+  it('gerRulerStartTime - 3', function() {
+    assert.deepEqual('09:30', util.gerRulerStartTime('09:30'))
+  })
+
+  it('gerRulerStartTime - 4', function() {
+    assert.deepEqual('09:30', util.gerRulerStartTime('09:59'))
+  })
+
+  it('recalculateRulers - 1', function() {
+    const week = {
+      weekDisplayProps: {
+        intervals: [
+        {
+          from: '6:20',
+          to:   '8:00'
+        },
+        {
+          from: '16:00',
+          to:   '19:00',
+        }]
+      }
+    }
+    const weekAfter = {
+      weekDisplayProps: {
+        ruler: [
+        {
+          "time" : "7:00",
+          "left" : 180,
+          "gap" : false
+        },
+        {
+          "time" : "8:00",
+          "left" : 360,
+          "gap" : true
+        },
+        {
+          "time" : "16:00",
+          "left" : 407,
+          "gap" : true
+        },
+        {
+          "time" : "17:00",
+          "left" : 587,
+          "gap" : false
+        },
+        {
+          "time" : "18:00",
+          "left" : 767,
+          "gap" : false
+        },
+        {
+          "time" : "19:00",
+          "left" : 947,
+          "gap" : false
+        }],
+        intervals: [
+        {
+          from: '6:20',
+          to:   '8:00'
+        },
+        {
+          from: '16:00',
+          to:   '19:00',
+        }]
+      }
+    } 
+    assert.deepEqual(weekAfter, util.recalculateRuler(week))
+  })
+
+})

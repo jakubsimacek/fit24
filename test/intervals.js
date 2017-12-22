@@ -1,67 +1,68 @@
-const assert = require('assert');
-const util = require('../util');
+const assert = require('assert')
+const intrv = require('../util/interval')
+const time = require('../util/time')
 
 describe('test time functions', function() {
 
   it('conv time 1', function() {
-    assert.deepStrictEqual('04:00', util.dateToTimeStr(util.timeStrToDate('04:00')));
+    assert.deepStrictEqual('04:00', time.dateToTimeStr(time.timeStrToDate('04:00')));
   });
 
   it('conv time 2', function() {
-    assert.equal('04:55', util.dateToTimeStr(util.timeStrToDate('04:55')));
+    assert.equal('04:55', time.dateToTimeStr(time.timeStrToDate('04:55')));
   });
 
   it('add time - simple', function() {
-    assert.equal('04:50', util.dateToTimeStr(util.addToTime(util.timeStrToDate('04:00'), 50)));
+    assert.equal('04:50', time.dateToTimeStr(time.addToTime(time.timeStrToDate('04:00'), 50)));
   });
 
   it('add time - sharp hours', function() {
-    assert.equal('04:00', util.dateToTimeStr(util.addToTime(util.timeStrToDate('03:00'), 60)));
+    assert.equal('04:00', time.dateToTimeStr(time.addToTime(time.timeStrToDate('03:00'), 60)));
   });
 
   it('add time - overflow', function() {
-    assert.equal('05:10', util.dateToTimeStr(util.addToTime(util.timeStrToDate('04:50'), 20)));
+    assert.equal('05:10', time.dateToTimeStr(time.addToTime(time.timeStrToDate('04:50'), 20)));
   });
 
   it('add time - overflow 2 hrs', function() {
-    assert.equal('06:10', util.dateToTimeStr(util.addToTime(util.timeStrToDate('04:50'), 80)));
+    assert.equal('06:10', time.dateToTimeStr(time.addToTime(time.timeStrToDate('04:50'), 80)));
   });
 
   it('add time - overflow 3 hrs', function() {
-    assert.equal('15:00', util.dateToTimeStr(util.addToTime(util.timeStrToDate('13:45'), 75)));
+    assert.equal('15:00', time.dateToTimeStr(time.addToTime(time.timeStrToDate('13:45'), 75)));
   });
 
   it('add time - add 175 mins', function() {
-    assert.equal('07:45', util.dateToTimeStr(util.addToTime(util.timeStrToDate('04:50'), 175)));
+    assert.equal('07:45', time.dateToTimeStr(time.addToTime(time.timeStrToDate('04:50'), 175)));
   });
 
   it('add time - add 295 mins', function() {
-    assert.equal('09:45', util.dateToTimeStr(util.addToTime(util.timeStrToDate('04:50'), 295)));
+    assert.equal('09:45', time.dateToTimeStr(time.addToTime(time.timeStrToDate('04:50'), 295)));
   });
 
   // subtracting
   it('subtract time - simple', function() {
-    assert.equal('04:00', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('04:50'), 50)));
+    assert.equal('04:00', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('04:50'), 50)));
   });
 
   it('subtract time - sharp', function() {
-    assert.equal('04:00', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('05:00'), 60)));
+    assert.equal('04:00', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('05:00'), 60)));
   });
 
   it('subtract time - overflow', function() {
-    assert.equal('04:50', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('05:10'), 20)));
+    assert.equal('04:50', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('05:10'), 20)));
   });
 
   it('subtract time - overflow 2 hrs', function() {
-    assert.equal('04:50', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('06:10'), 80)));
+    assert.equal('04:50', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('06:10'), 80)));
   });
 
   it('subtract time - add 175 mins', function() {
-    assert.equal('04:50', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('07:45'), 175)));
+    assert.equal('04:50', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('07:45'), 175)));
   });
 
   it('subtract time - add 295 mins', function() {
-    assert.equal('04:50', util.dateToTimeStr(util.subFromTime(util.timeStrToDate('09:45'), 295)));
+    assert.equal('04:50', time.dateToTimeStr(time.subFromTime(time.timeStrToDate('09:45'), 295)));
   });
 });
 
@@ -69,40 +70,40 @@ describe('test interval functions', function() {
 
   it('test intervals - empty', function() {
     let emptyWeek = { days : [ {terms : []}, { terms : []}]};
-    assert.deepEqual([{ start : '04:00', end : '22:00' }], util.calculateFreeBlocks(emptyWeek));
+    assert.deepEqual([{ start : '04:00', end : '22:00' }], intrv.calculateFreeBlocks(emptyWeek));
   });
 
   it('test intervals - 1 term - split', function() {
     let week = { days : [ {terms : [ { start : "14:00" } ]}, { terms : []}]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                          { start : '15:15', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - split+shift from left', function() {
     let week = { days : [ { terms : [ { start : "14:00" } ]}, 
                                { terms : [ { start : "14:15" } ]}]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                          { start : '15:30', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - gap removal', function() {
     let week = { days : [ { terms : [ { start : "14:00" } ]}, 
                                { terms : [ { start : "15:30" } ]}]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                          { start : '16:45', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap removal', function() {
     let week = { days : [ { terms : [ { start : "14:00" } ]}, 
                                { terms : [ { start : "16:25" } ]}]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                          { start : '17:40', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap not removal', function() {
     let week = { days : [ { terms : [ { start : "14:00" } ]}, 
                                { terms : [ { start : "16:35" } ]}]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                          { start : '15:15', end : '16:20' }, 
                                                          { start : '17:50', end : '22:00' }]);
   });
@@ -111,7 +112,7 @@ describe('test interval functions', function() {
     let week = {      days : [ { terms : [ { start : "14:00" } ]}, 
                                { terms : [ { start : "16:35" } ]},
                                { terms : [ { start : "17:30" } ]} ]};
-    assert.deepEqual(util.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
+    assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
                                                      { start : '15:15', end : '16:20' }, 
                                                      { start : '18:45', end : '22:00' }]);
     //   f                f             x              f 
@@ -127,73 +128,73 @@ describe('test interval intersection', function() {
   it('test intervals - empty', function() {
     let int = []
     let free = []
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left miss', function() {
     let int = [{ start: '08:00', end: '09:00'}]
     let free = [{ start: '18:00', end: '19:00'}]
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left miss with touch', function() {
     let int = [{ start: '08:00', end: '09:00'}]
     let free = [{ start: '09:00', end: '10:00'}]
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left intersec', function() {
     let int = [{ start: '08:00', end: '09:00'}]
     let free = [{ start: '08:00', end: '09:30'}]
-    assert.deepEqual([{ start: '08:00', end: '09:00'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:00', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left intersec2', function() {
     let int = [{ start: '08:00', end: '09:00'}]
     let free = [{ start: '08:30', end: '09:30'}]
-    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid inner intersec', function() {
     let int = [{ start: '08:00', end: '09:00'}]
     let free = [{ start: '08:15', end: '08:45'}]
-    assert.deepEqual([{ start: '08:15', end: '08:45'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:15', end: '08:45'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid outer intersec', function() {
     let int = [{ start: '08:15', end: '08:45'}]
     let free = [{ start: '08:00', end: '09:00'}]
-    assert.deepEqual([{ start: '08:15', end: '08:45'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:15', end: '08:45'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid outer intersec - too short', function() {
     let int = [{ start: '08:15', end: '08:16'}]
     let free = [{ start: '08:00', end: '09:00'}]
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right intersec - with touch', function() {
     let int = [{ start: '08:30', end: '09:00'}]
     let free = [{ start: '08:00', end: '09:00'}]
-    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right intersec', function() {
     let int = [{ start: '08:30', end: '09:30'}]
     let free = [{ start: '08:00', end: '09:00'}]
-    assert.deepEqual([{ start: '08:30', end: '09:00'}], util.getIntersection(int, free));
+    assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right miss', function() {
     let int = [{ start: '08:30', end: '09:30'}]
     let free = [{ start: '09:30', end: '09:45'}]
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right miss2', function() {
     let int = [{ start: '08:30', end: '09:30'}]
     let free = [{ start: '10:30', end: '10:45'}]
-    assert.deepEqual([], util.getIntersection(int, free));
+    assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - complex', function() {
@@ -209,18 +210,18 @@ describe('test interval intersection', function() {
     assert.deepEqual([{start: '10:45', end: '11:30'},
                       {start: '13:30', end: '14:00'},
                       {start: '14:30', end: '17:30'},
-                      {start: '19:30', end: '20:00'}], util.getIntersection(int, free));
+                      {start: '19:30', end: '20:00'}], intrv.getIntersection(int, free));
   });
 
 })
 
 describe('test interval boundaries', function() {
   it('findBlock - simple', function() {
-    const start = util.timeStrToDate('08:00')
-    const end = util.timeStrToDate('09:00')
-    const time = util.timeStrToDate('08:30')
+    const start = time.timeStrToDate('08:00')
+    const end = time.timeStrToDate('09:00')
+    const tim = time.timeStrToDate('08:30')
     assert.deepEqual({ startDate: start, endDate: end }, 
-                     util.findBlock([{ startDate: start, endDate: end }], time))
+                     intrv.findBlock([{ startDate: start, endDate: end }], tim))
   })
   it('test intervals - complex', function() {
     let int = [{ start: '08:30', end: '11:30'},
@@ -234,7 +235,7 @@ describe('test interval boundaries', function() {
     assert.deepEqual([{minStart: '04:00', maxStart: '08:55', minEnd: '11:05', maxEnd: '12:00'},
                       {minStart: '13:00', maxStart: '13:55', minEnd: '17:20', maxEnd: '17:30'},
                       {minStart: '19:00', maxStart: '19:40', minEnd: '21:05', maxEnd: '22:00'}
-                   ], util.getIntervalBoundaries(int, free, 90));
+                   ], intrv.getIntervalBoundaries(int, free, 90));
   });
 
 })
@@ -267,7 +268,7 @@ describe('test day free blocks', function() {
       [
         { start: '04:00', end: '17:45' },
         { start: '19:15', end: '22:00' }
-      ], util.calculateFreeBlocksForDay(week, 'ut'));
+      ], intrv.calculateFreeBlocksForDay(week, 'ut'));
   })
 
   it('test free blocks for a day - more complex', function() {
@@ -305,7 +306,7 @@ describe('test day free blocks', function() {
         { start: '04:00', end: '09:45' },
         { start: '11:30', end: '16:15' },
         { start: '19:15', end: '22:00' }
-      ], util.calculateFreeBlocksForDay(week, 'ut'));
+      ], intrv.calculateFreeBlocksForDay(week, 'ut'));
   })
 
   it('test free blocks for a week - complex', function() {
@@ -377,7 +378,7 @@ describe('test day free blocks', function() {
             { start: '04:00', end: '22:00' }
           ]
         }
-      ], util.calculateFreeBlocksForWeek(week));
+      ], intrv.calculateFreeBlocksForWeek(week));
   })
 
 })

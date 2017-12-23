@@ -7,15 +7,15 @@ const CircularJSON = require('circular-json');
 const timePadding = 15;  // adds minutes after and before each term to calculate intervals
 
 // converts string "14:45" into 14.45, ...
-function timeToDec(timeStr) {
+/*function timeToDec(timeStr) {
   const tParts = timeStr.split(":");
   const hh = partseInt(tParts[0], 10);
   const mm = partseInt(tParts[1], 10);
   return hh * (mm/100);
-}
+}*/
 
 // function adds the specified number of minutes to baseTime
-function addToTime(baseTime, minutes) {
+/*function addToTime(baseTime, minutes) {
   const baseHours = Math.floor(baseTime);
   const baseMins = (baseTime - baseHours) * 100;
   const addHours = Math.floor(minutes / 60);
@@ -26,10 +26,10 @@ function addToTime(baseTime, minutes) {
     addHours += 1;
   }
   return baseHours + addHours + (intermAdd / 100);
-}
+}*/
 
 // function subtracts the specified number of minutes from baseTime
-function subFromTime(baseTime, minutes) {
+/*function subFromTime(baseTime, minutes) {
   const baseHours = Math.floor(baseTime);
   const baseMins = (baseTime - baseHours) * 100;
   const subtractHours = Math.floor(minutes / 60);
@@ -40,8 +40,8 @@ function subFromTime(baseTime, minutes) {
     addHours -= 1;
   }
   return baseHours + addHours + (intermAdd / 100);
-}
-
+}*/
+/*
 function makeTimeOccupation(week) {
   let arrFree = [ { start : 4.00, end : 22.00 }];
   week.days.map(d => { 
@@ -64,16 +64,18 @@ function makeTimeOccupation(week) {
     };
   };
   return arrF]ree;
-}
+}*/
 
-function add(a, b) {
+/*function add(a, b) {
   return a + b;
-}
+}*/
 
-function formatCzDate(date) {
+/*function formatCzDate(date) {
 console.log(date.constructor.name);
   return formatDate('{day}.{month}.{year}', date);
-}
+}*/
+
+
 
 //router.get('/admin/tyden/novy', 
 module.exports.getCreateWeek = function (req, res) {
@@ -178,20 +180,43 @@ module.exports.getWeekEditor = function (req, res) {
    else {
      console.log('admin tyden ' + week);
 /* usecases:
-  delete interval: [must be empty]
-  change start of interval: {old start time; new start time}
-  change end of interval: {start time; new end time}
-  split interval: {start time; new end time, new start time}
-  join intervals: {start time of the 1st one, start time of the 2nd one}
+  delete_interval: {start_time}
+    G: util.getDeletabeIntervals // one must remain, must not contain terms
+    P: util.deleteInterval(week, startTime)
+       util.recalculateRuler(week)
+       week.save()
 
-  add term
-  delete term {term id}
-  move term {term id; new term id} [[term id = DY_HH:MI (po_16:45)]]
-  update term {term id; line 1, line 2, coach ...}
-  add term booking {term id; person, number}
-  remove term booking {term id; person, number}
-  add term reservation {term id; person, number}
-  remove term reservation {term id; person, number}
+  change_interval_start:
+    G: util.getIntervalBoundaries(intervals, freeBlocks, minIntervalLength)
+    P: util.changeIntervalStart(week, oldStartTime, newStartTime)
+       util.recalculateRuler(week)
+       week.save()
+
+  change_interval_end:
+    G: util.getIntervalBoundaries(intervals, freeBlocks, minIntervalLength)
+    P: util.changeIntervalStart(week, oldStartTime, newEndTime)
+       util.recalculateRuler(week)
+       week.save()
+
+  split_interval:
+    G: util.getIntervalSplitingBlocks(week)
+    P: util.spitInterval(week, startTime, newEndTime, newStartTime)
+       util.recalculateRuler(week)
+       week.save() 
+
+  join_intervals:
+    P: util.joinIntervals(startTimeFirst)
+       util.recalculateRuler(week)
+       week.save()
+
+  add_term
+  delete_term {term id}
+  move_term {term id; new term id} [[term id = DY_HH:MI (po_16:45)]]
+  update_term {term id; line 1, line 2, coach ...}
+  add_term_booking {term id; person, number}
+  remove_term_booking {term id; person, number}
+  add_term_reservation {term id; person, number}
+  remove_term_reservation {term id; person, number}
 
 */
      // coaches

@@ -216,3 +216,47 @@ tr {
     padding: 10px;
     border: 1px solid;
 }
+
+.menu {
+    height: 1.5em;
+}
+
+.menu-item {
+    /*width: 20em; */
+    padding-right: 3em;
+    border-color: magenta;
+    float: left;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.button-box {
+    padding-top: 1em;
+    padding-left: 6em;
+}
+
+.button-row {
+    padding-right: 3em;
+    float: left;
+}
+
+label {
+    display: inline-block;
+    width: 10em;
+    padding-right: 1em;
+    text-align: right;
+    padding-top: 0.25em;
+}
+
+.form-field {
+
+}
+
+.form-field-error {
+    background-color: #ff7777;
+}
+

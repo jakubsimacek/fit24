@@ -7,6 +7,7 @@ let peopleList = {
     count: {type: Number, required: true, min: 1}
 };
 
+// TODO: to remove
 let ruler = {
     time: {type: String, required: true},
     left: {type: Number, required: true},
@@ -14,10 +15,11 @@ let ruler = {
 };
 
 let interval = {
-    from: {type: String, required: true},
-    to: {type: String, required: true},
+    start: {type: String, required: true},
+    end: {type: String, required: true},
 };
 
+// TODO: to remove ???
 let weekDisplayProps = {
     firstGap: {type: Number, required: true},
     intermGap: {type: Number, required: true},
@@ -26,6 +28,7 @@ let weekDisplayProps = {
     intervals: {type: [interval], required: true},
 };
 
+// TODO: to remove
 let termDisplayProps = {
     left: {type: Number, required: true},
     top: {type: Number, required: true},
@@ -58,8 +61,9 @@ let week = {
     startDate: {type: Date, required: true},
     endDate: {type: Date, required: true},
     description: {type: String, required: true},
-    weekDisplayProps: {type: weekDisplayProps, required: true},
-    days: {type: [days], required: true}
+    //weekDisplayProps: {type: weekDisplayProps, required: true},
+    days: {type: [days], required: true},
+    intervals: {type: [interval], required: true}
 };
 
 let Week = new Schema(week);

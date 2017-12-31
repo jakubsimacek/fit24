@@ -1,6 +1,7 @@
 const assert = require('assert')
 const intrv = require('../util/interval')
 const time = require('../util/time')
+const pix = require('../util/pixels')
 
 describe('test time functions', function() {
 
@@ -66,55 +67,130 @@ describe('test time functions', function() {
   });
 });
 
+describe('enrich week function', function() {
+
+  d1400 = time.timeStrToDate('14:00')
+  d1500 = time.timeStrToDate('15:00')
+  d1600 = time.timeStrToDate('16:00')
+  d1730 = time.timeStrToDate('17:30')
+  d1800 = time.timeStrToDate('18:00')
+  d1900 = time.timeStrToDate('19:00')
+
+  it('test enrich - empty', function() {
+    let emptyWeek = { days : [ {day : 'po', terms : []}, { day : 'ut', terms : []} ] }
+    assert.deepEqual(
+      intrv.enrichWeek(emptyWeek),
+      { days: [ 
+        {day : 'po', terms: []}, 
+        {day : 'ut', terms: []}
+      ],
+        intervals : []
+      }
+    )
+  })
+
+  it('test enrich - 1+0 term', function() {
+    let week = { days : [ {day : 'po', terms : [ { start : "14:00" } ]}, { day : 'ut', terms : [] } ] }
+    assert.deepEqual(
+      intrv.enrichWeek(week), 
+      { days : [ 
+        { day : 'po', terms : [
+          { start : '14:00', startDate : d1400, end : '15:00', endDate : d1500 }
+        ]}, 
+        { day : 'ut', terms : [] }
+      ],
+        intervals : []
+      }
+    )
+  })
+
+  it('test enrich - 1+1 term', function() {
+    let week = { days : [ {day : 'po', terms : [ { start : "14:00" } ]}, { day : 'ut', terms : [{ start : "16:00", end : "17:30" }] } ] }
+    assert.deepEqual(intrv.enrichWeek(week), 
+      { days : [ 
+        { day : 'po', terms : [
+          { start : '14:00', startDate : d1400, end : '15:00', endDate : d1500 }
+        ]}, 
+        { day : 'ut', terms : [
+          { start : '16:00', startDate : d1600, end : '17:30', endDate : d1730 }
+        ] }
+      ],
+        intervals : []
+      }
+    )
+  })
+
+  it('test enrich - 3+1 term', function() {
+    let week = { days : [ {day : 'po', terms : [ { start : "14:00" }, { start : "16:00", end : "17:30" }, { start : "18:00" } ]}, { day : 'ut', terms : [{ start : "16:00", end : "17:30" }] } ] }
+    assert.deepEqual(intrv.enrichWeek(week), 
+      { days : [ 
+        { day : 'po', terms : [
+          { start : '14:00', startDate : d1400, end : '15:00', endDate : d1500 },
+          { start : '16:00', startDate : d1600, end : '17:30', endDate : d1730 },
+          { start : '18:00', startDate : d1800, end : '19:00', endDate : d1900 }
+        ]}, 
+        { day : 'ut', terms : [
+          { start : '16:00', startDate : d1600, end : '17:30', endDate : d1730 }
+        ] }
+      ],
+        intervals : []
+      }
+    )
+  })
+
+
+})
+
 describe('test interval functions', function() {
 
   it('test intervals - empty', function() {
-    let emptyWeek = { days : [ {terms : []}, { terms : []}]};
+    let emptyWeek = intrv.enrichWeek({ days : [ {day : 'po', terms : []}, { day : 'ut', terms : []}]})
     assert.deepEqual([{ start : '04:00', end : '22:00' }], intrv.calculateFreeBlocks(emptyWeek));
   });
 
   it('test intervals - 1 term - split', function() {
-    let week = { days : [ {terms : [ { start : "14:00" } ]}, { terms : []}]};
+    let week = intrv.enrichWeek({ days : [ {day : 'po', terms : [ { start : "14:00" } ]}, { day : 'ut', terms : []}]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                         { start : '15:15', end : '22:00' }]);
+                                                       { start : '15:15', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - split+shift from left', function() {
-    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
-                               { terms : [ { start : "14:15" } ]}]};
+    let week = intrv.enrichWeek({ days : [ { day : 'po', terms : [ { start : "14:00" } ]}, 
+                                           { day : 'ut', terms : [ { start : "14:15" } ]}]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                         { start : '15:30', end : '22:00' }]);
+                                                       { start : '15:30', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - gap removal', function() {
-    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
-                               { terms : [ { start : "15:30" } ]}]};
+    let week = intrv.enrichWeek({ days : [ { day : 'po', terms : [ { start : "14:00" } ]}, 
+                                           { day : 'ut', terms : [ { start : "15:30" } ]}]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                         { start : '16:45', end : '22:00' }]);
+                                                       { start : '16:45', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap removal', function() {
-    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
-                               { terms : [ { start : "16:25" } ]}]};
+    let week = intrv.enrichWeek({ days : [ { day : 'po', terms : [ { start : "14:00" } ]}, 
+                                           { day : 'ut', terms : [ { start : "16:25" } ]}]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                         { start : '17:40', end : '22:00' }]);
+                                                       { start : '17:40', end : '22:00' }]);
   });
 
   it('test intervals - 2 term - bigger gap not removal', function() {
-    let week = { days : [ { terms : [ { start : "14:00" } ]}, 
-                               { terms : [ { start : "16:35" } ]}]};
+    let week = intrv.enrichWeek({ days : [ { day : 'po', terms : [ { start : "14:00" } ]}, 
+                                           { day : 'ut', terms : [ { start : "16:35" } ]}]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                         { start : '15:15', end : '16:20' }, 
-                                                         { start : '17:50', end : '22:00' }]);
+                                                       { start : '15:15', end : '16:20' }, 
+                                                       { start : '17:50', end : '22:00' }]);
   });
 
   it('test intervals - 3 term - orange', function() {
-    let week = {      days : [ { terms : [ { start : "14:00" } ]}, 
-                               { terms : [ { start : "16:35" } ]},
-                               { terms : [ { start : "17:30" } ]} ]};
+    let week = intrv.enrichWeek(
+               {      days : [ { day : 'po', terms : [ { start : "14:00" } ]}, 
+                               { day : 'ut', terms : [ { start : "16:35" } ]},
+                               { day : 'st', terms : [ { start : "17:30" } ]} ]})
     assert.deepEqual(intrv.calculateFreeBlocks(week), [{ start : '04:00', end : '13:45' },
-                                                     { start : '15:15', end : '16:20' }, 
-                                                     { start : '18:45', end : '22:00' }]);
+                                                       { start : '15:15', end : '16:20' }, 
+                                                       { start : '18:45', end : '22:00' }]);
     //   f                f             x              f 
     //       13:45 - 15:15 16:20 - 17:50 17:15 - 18:45         occup.
      //  ok            ok            not-ok        ok
@@ -132,81 +208,83 @@ describe('test interval intersection', function() {
   });
 
   it('test intervals - left miss', function() {
-    let int = [{ start: '08:00', end: '09:00'}]
-    let free = [{ start: '18:00', end: '19:00'}]
+    let int = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '18:00', end: '19:00'}])
     assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left miss with touch', function() {
-    let int = [{ start: '08:00', end: '09:00'}]
-    let free = [{ start: '09:00', end: '10:00'}]
+    let int = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '09:00', end: '10:00'}])
     assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left intersec', function() {
-    let int = [{ start: '08:00', end: '09:00'}]
-    let free = [{ start: '08:00', end: '09:30'}]
+    let int = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '08:00', end: '09:30'}])
     assert.deepEqual([{ start: '08:00', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - left intersec2', function() {
-    let int = [{ start: '08:00', end: '09:00'}]
-    let free = [{ start: '08:30', end: '09:30'}]
+    let int = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '08:30', end: '09:30'}])
     assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid inner intersec', function() {
-    let int = [{ start: '08:00', end: '09:00'}]
-    let free = [{ start: '08:15', end: '08:45'}]
+    let int = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '08:15', end: '08:45'}])
     assert.deepEqual([{ start: '08:15', end: '08:45'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid outer intersec', function() {
-    let int = [{ start: '08:15', end: '08:45'}]
-    let free = [{ start: '08:00', end: '09:00'}]
+    let int = intrv.enrichDayArray([{ start: '08:15', end: '08:45'}])
+    let free = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
     assert.deepEqual([{ start: '08:15', end: '08:45'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - mid outer intersec - too short', function() {
-    let int = [{ start: '08:15', end: '08:16'}]
-    let free = [{ start: '08:00', end: '09:00'}]
-    assert.deepEqual([], intrv.getIntersection(int, free));
+    let int = intrv.enrichDayArray([{ start: '08:15', end: '08:16'}])
+    let free = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
+    assert.deepEqual([], intrv.getIntersection(int, free))
   });
 
   it('test intervals - right intersec - with touch', function() {
-    let int = [{ start: '08:30', end: '09:00'}]
-    let free = [{ start: '08:00', end: '09:00'}]
+    let int = intrv.enrichDayArray([{ start: '08:30', end: '09:00'}])
+    let free = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
     assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right intersec', function() {
-    let int = [{ start: '08:30', end: '09:30'}]
-    let free = [{ start: '08:00', end: '09:00'}]
+    let int = intrv.enrichDayArray([{ start: '08:30', end: '09:30'}])
+    let free = intrv.enrichDayArray([{ start: '08:00', end: '09:00'}])
     assert.deepEqual([{ start: '08:30', end: '09:00'}], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right miss', function() {
-    let int = [{ start: '08:30', end: '09:30'}]
-    let free = [{ start: '09:30', end: '09:45'}]
+    let int = intrv.enrichDayArray([{ start: '08:30', end: '09:30'}])
+    let free = intrv.enrichDayArray([{ start: '09:30', end: '09:45'}])
     assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - right miss2', function() {
-    let int = [{ start: '08:30', end: '09:30'}]
-    let free = [{ start: '10:30', end: '10:45'}]
+    let int = intrv.enrichDayArray([{ start: '08:30', end: '09:30'}])
+    let free = intrv.enrichDayArray([{ start: '10:30', end: '10:45'}])
     assert.deepEqual([], intrv.getIntersection(int, free));
   });
 
   it('test intervals - complex', function() {
-    let int = [{ start: '08:30', end: '09:30'},
+    let int = intrv.enrichDayArray(
+              [{ start: '08:30', end: '09:30'},
                { start: '10:30', end: '11:30'},
                { start: '13:30', end: '17:30'},
-               { start: '19:30', end: '21:30'}]
-    let free = [{ start: '04:00', end: '08:00'},
+               { start: '19:30', end: '21:30'}])
+    let free = intrv.enrichDayArray(
+               [{ start: '04:00', end: '08:00'},
                 { start: '10:30', end: '10:31'},
                 { start: '10:45', end: '14:00'},
                 { start: '14:30', end: '20:00'},
-                { start: '22:45', end: '22:00'}]
+                { start: '22:45', end: '22:00'}])
     assert.deepEqual([{start: '10:45', end: '11:30'},
                       {start: '13:30', end: '14:00'},
                       {start: '14:30', end: '17:30'},
@@ -224,14 +302,16 @@ describe('test interval boundaries', function() {
                      intrv.findBlock([{ startDate: start, endDate: end }], tim))
   })
   it('test intervals - complex', function() {
-    let int = [{ start: '08:30', end: '11:30'},
+    let int = intrv.enrichDayArray(
+              [{ start: '08:30', end: '11:30'},
                { start: '13:30', end: '17:30'},
-               { start: '19:00', end: '21:30'}]
-    let free = [{ start: '04:00', end: '09:00'},
+               { start: '19:00', end: '21:30'}])
+    let free = intrv.enrichDayArray(
+               [{ start: '04:00', end: '09:00'},
                 { start: '10:00', end: '10:30'},
                 { start: '11:00', end: '14:00'},
                 { start: '17:15', end: '19:45'},
-                { start: '21:00', end: '22:00'}]
+                { start: '21:00', end: '22:00'}])
     assert.deepEqual([{minStart: '04:00', maxStart: '08:55', minEnd: '11:05', maxEnd: '12:00'},
                       {minStart: '13:00', maxStart: '13:55', minEnd: '17:20', maxEnd: '17:30'},
                       {minStart: '19:00', maxStart: '19:40', minEnd: '21:05', maxEnd: '22:00'}
@@ -242,7 +322,7 @@ describe('test interval boundaries', function() {
 
 describe('test day free blocks', function() {
   it('test free blocks for a day - simple', function() {
-    let week = {  
+    let week = intrv.enrichWeek({  
     days:[  
       {  
          day:'po',
@@ -262,7 +342,7 @@ describe('test day free blocks', function() {
           ]
         }
       ]
-    }
+    })
 
     assert.deepEqual(
       [
@@ -272,7 +352,7 @@ describe('test day free blocks', function() {
   })
 
   it('test free blocks for a day - more complex', function() {
-    let week = {  
+    let week = intrv.enrichWeek({  
     days:[  
       {  
          day:'po',
@@ -299,7 +379,7 @@ describe('test day free blocks', function() {
           ]
         }
       ]
-    }
+    })
 
     assert.deepEqual(
       [
@@ -310,7 +390,7 @@ describe('test day free blocks', function() {
   })
 
   it('test free blocks for a week - complex', function() {
-    let week = {  
+    let week = intrv.enrichWeek({  
    days:[  
       {  
          day:'po',
@@ -330,7 +410,7 @@ describe('test day free blocks', function() {
           ]
       }
     ]
-}
+  })
 
     assert.deepEqual(
       [
@@ -384,81 +464,77 @@ describe('test day free blocks', function() {
 })
 
 describe('test regeneration of the ruler', function() {
+  d0620 = time.timeStrToDate('06:20')
+  d0800 = time.timeStrToDate('08:00')
+  d0900 = time.timeStrToDate('09:00')
+  d0929 = time.timeStrToDate('09:29')
+  d0930 = time.timeStrToDate('09:30')
+  d0959 = time.timeStrToDate('09:59')
+  d1000 = time.timeStrToDate('10:00')
+  d1800 = time.timeStrToDate('18:00')
+  d1900 = time.timeStrToDate('19:00')
+
   it('gerRulerStartTime - 1', function() {
-    assert.deepEqual('09:00', util.gerRulerStartTime('09:00'))
+    assert.deepEqual(d0900, time.roundStartTime(d0900))
   })
 
   it('gerRulerStartTime - 2', function() {
-    assert.deepEqual('09:00', util.gerRulerStartTime('09:29'))
+    assert.deepEqual(d1000, time.roundStartTime(d0929))
   })
 
   it('gerRulerStartTime - 3', function() {
-    assert.deepEqual('09:30', util.gerRulerStartTime('09:30'))
+    assert.deepEqual(d1000, time.roundStartTime(d0930))
   })
 
   it('gerRulerStartTime - 4', function() {
-    assert.deepEqual('09:30', util.gerRulerStartTime('09:59'))
+    assert.deepEqual(d1000, time.roundStartTime(d0959))
   })
 
   it('recalculateRulers - 1', function() {
-    const week = {
-      weekDisplayProps: {
-        intervals: [
-        {
-          from: '6:20',
-          to:   '8:00'
-        },
-        {
-          from: '16:00',
-          to:   '19:00',
-        }]
-      }
-    }
-    const weekAfter = {
-      weekDisplayProps: {
-        ruler: [
-        {
-          "time" : "7:00",
-          "left" : 180,
-          "gap" : false
-        },
-        {
-          "time" : "8:00",
-          "left" : 360,
-          "gap" : true
-        },
-        {
-          "time" : "16:00",
-          "left" : 407,
-          "gap" : true
-        },
-        {
-          "time" : "17:00",
-          "left" : 587,
-          "gap" : false
-        },
-        {
-          "time" : "18:00",
-          "left" : 767,
-          "gap" : false
-        },
-        {
-          "time" : "19:00",
-          "left" : 947,
-          "gap" : false
-        }],
-        intervals: [
-        {
-          from: '6:20',
-          to:   '8:00'
-        },
-        {
-          from: '16:00',
-          to:   '19:00',
-        }]
-      }
-    } 
-    assert.deepEqual(weekAfter, util.recalculateRuler(week))
+    const week = intrv.enrichWeek({
+      days: [],
+      intervals: [
+      {
+        start: '06:20',
+        end:   '08:00'
+      },
+      {
+        start: '16:00',
+        end:   '19:00',
+      }]
+    })
+    const expectedRulerArray = [
+      {
+        "time" : "7:00",
+        "left" : 180,
+        "gap" : false
+      },
+      {
+        "time" : "8:00",
+        "left" : 360,
+        "gap" : true
+      },
+      {
+        "time" : "16:00",
+        "left" : 407,
+        "gap" : false
+      },
+      {
+        "time" : "17:00",
+        "left" : 587,
+        "gap" : false
+      },
+      {
+        "time" : "18:00",
+        "left" : 767,
+        "gap" : false
+      },
+      {
+        "time" : "19:00",
+        "left" : 947,
+        "gap" : false
+      }]
+    assert.deepEqual(expectedRulerArray, pix.calculateRuler(week))
   })
 
 })

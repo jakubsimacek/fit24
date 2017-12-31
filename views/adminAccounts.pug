@@ -1,0 +1,42 @@
+extends layout
+
+block content
+  h2 Ucty
+
+  a(href="/registrace")
+    input(type="submit",name="add_account",value="Add")
+
+  .form
+    form(action="/admin/uzivatele",method="post")
+      table(border=2)
+        thead
+          tr
+            td Login
+            td Cele jmeno
+            td Email
+            td Vytvoren
+            td Admin?
+            td Trener?
+            td Pocet roli
+            td Pocet skupin
+            td Uzamcen?
+            td Posledni prihlaseni
+            td Zmenit
+            td Odstranit
+        each account in accounts
+          tr
+            td
+              a(href="/admin/uzivatel/" + account.username)= account.username
+            td= account.fullname
+            td= account.email
+            td= account.createddate
+            td= account.isAdmin
+            td= account.isCoach
+            td= account.noRoles
+            td= account.noGroups
+            td= account.locked
+            td= account.lastLogin
+            td
+              a(href=account.urlUpdate) Zmenit
+            td
+              a(href=account.urlDelete) Odstranit

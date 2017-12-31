@@ -1,0 +1,31 @@
+extends layout
+
+block content
+  h2 Smazani uzivatele
+  if error
+    h3 Missing #{error}
+
+  form(action=urlSubmit,method="post")
+    div
+      label Username
+      input(type="text",name="username",value=account.username readonly)
+
+    div
+      label Jmeno
+      input(type="text",name="fullname",value=account.fullname readonly)
+
+    div
+      label Email
+      input(type="text",name="email",value=account.email readonly)
+
+    div
+      label admin
+      input(type="checkbox" name="isAdmin",checked=account.isAdmin,onClick="return false")
+
+    div
+      label trenér
+      input(type="checkbox" name="isCoach",checked=account.isCoach,onClick="return false")
+
+    div
+      input(type="submit",value="Smaz")
+

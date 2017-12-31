@@ -1,0 +1,44 @@
+extends layout
+
+block content
+  h2 Smazani uzivatele
+  if error.text
+    h3 Missing #{error.text}
+
+  form(action=form.urlSubmit,method="post")
+    div
+      label Username
+      input(type="text",name="username",value=account.username,readonly=form.isReadOnly,class=error.username)
+
+    div
+      label Jmeno
+      input(type="text",name="fullname",value=account.fullname,readonly=form.isReadOnly,class=error.fullname)
+
+    div
+      label Email
+      input(type="text",name="email",value=account.email,readonly=form.isReadOnly,class=error.email)
+
+    if (!form.isReadOnly)
+      div
+        label Heslo
+        input(type="password",name="password",class=error.password)
+      div
+        label Heslo jeste jednou
+        input(type="password",name="password2",class=error.password)
+
+    div
+      label je admin?
+      input(type="checkbox" name="isAdmin",checked=account.isAdmin,onClick="return #{(form.isReadOnly) ? false : true }")
+
+    div
+      label je trenér?
+      input(type="checkbox" name="isCoach",checked=account.isCoach,onClick="return #{(form.isReadOnly) ? false : true }")
+
+    .clearfix.button-box
+      .button-row
+        input(type="reset",value="Znovu")
+      .button-row
+        input(type="button",value="Zpet",onClick="location.href='/admin/uzivatele'")
+      .button-row
+        input(type="submit",value=form.submitButtonValue)
+

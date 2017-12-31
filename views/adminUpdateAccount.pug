@@ -1,0 +1,35 @@
+extends layout
+
+block content
+  h2 Zmena uzivatele
+  if error
+    h3 Missing #{error}
+
+  form(action=urlSubmit,method="post")
+    div
+      label Username
+      input(type="text",name="username",value=account.username)
+
+    div
+      label Jmeno
+      input(type="text",name="fullname",value=account.fullname)
+
+    div
+      label Password
+      input(type="password",name="password",value=account.password)
+
+    div
+      label Email
+      input(type="text",name="email",value=account.email)
+
+    div
+      label admin
+      input(type="checkbox" name="isAdmin",checked=account.isAdmin)
+
+    div
+      label trenér
+      input(type="checkbox" name="isCoach",checked=account.isCoach)
+
+    div
+      input(type="submit",value="Uloz")
+

@@ -21,16 +21,16 @@ router.get('/', function(req, res) {
 });
 
 // now we allow anybody to register, TODO: move to admin zone
-router.get('/registrace', function(req, res) {
+router.get('/registrace', ctrlAccount.getCreateUser) /*function(req, res) {
   console.log(req.query);
   if (req.query.error)
     res.render('register', {error: req.query.error});
   else
     res.render('register', {});
-});
+}); */
 
-router.post('/register', function(req, res, next) {
-  console.log('registering user');
+router.post('/registrace', ctrlAccount.postCreateUser) /*function(req, res, next) {
+/*  console.log('registering user');
   console.log(req.body.email);
   let roles = [];
   if (!req.body.email) {
@@ -47,9 +47,9 @@ router.post('/register', function(req, res, next) {
 
     console.log('user registered!');
 
-    res.redirect('/');
+    res.redirect('/admin/uzivatele');
   });
-});
+}); */
 
 router.get('/prihlaseni', function(req, res) {
   res.render('login', {user: req.user});
@@ -209,6 +209,10 @@ router.post('/admin/uzivatel/:user/blokovat', ctrlAccount.postDisableUser);
 // enable user
 router.get('/admin/uzivatel/:user/odblokovat', ctrlAccount.getEnableUser);
 router.post('/admin/uzivatel/:user/odblokovat', ctrlAccount.postEnableUser);
+
+// update user
+router.get('/admin/uzivatel/:user/zmenit', ctrlAccount.getUpdateUser);
+router.post('/admin/uzivatel/:user/zmenit', ctrlAccount.postUpdateUser);
 
 // delete user
 router.get('/admin/uzivatel/:user/odstranit', ctrlAccount.getDeleteUser);

@@ -1,5 +1,6 @@
 const time = require('./time')
 const CircularJSON = require('circular-json')
+const util = require('../util')
 
 const defaultDuration = 60; // default term duration if end not providet
 const timePadding = 15;  // adds minutes after and before each term to calculate intervals
@@ -8,14 +9,63 @@ const minStartTime = time.timeStrToDate('04:00')
 const maxEndTime = time.timeStrToDate('22:00')
 const minFreeBlockLength = 60
 
-module.exports.calculateFreeBlocks = function (week) {
+function dbg(o, msg) {
+  if (msg == undefined)
+    msg = ''
+  else
+    msg += ': '
+  console.log(msg, CircularJSON.stringify(o))
+}
+
+// enrich day array of terms (add dateTime objects)
+let enrichDayArray = function (dayArray) {
+    return dayArray.map(t => {
+      const startDate = time.timeStrToDate(t.start)
+      const endDate = (t.end) ? time.timeStrToDate(t.end) : time.addToTime(startDate, defaultDuration)
+
+      return { start     : t.start,
+               startDate : startDate, 
+               endDate   : endDate,
+               end       : time.dateToTimeStr(endDate)
+      }
+    }) // terms
+}
+module.exports.enrichDayArray = enrichDayArray
+
+// enrich week (add dateTime objects)
+module.exports.enrichWeek = function (week) {
+//dbg(week.days, 'W')
+  const days = week.days.map(d => {
+/*    const terms = d.terms.map(t => {
+//dbg(t, 'ENR')
+      const startDate = time.timeStrToDate(t.start)
+      const endDate = (t.end) ? time.timeStrToDate(t.end) : time.addToTime(startDate, defaultDuration)
+
+      return { start     : t.start,
+               startDate : startDate, 
+               endDate   : endDate,
+               end       : time.dateToTimeStr(endDate)
+      }
+    }) // terms */
+    const terms = (d.terms) ? enrichDayArray(d.terms) : []
+    return { day : d.day, terms : terms }
+  }) // days
+  const intervals = (week.intervals) ? enrichDayArray(week.intervals)
+                                     : []
+  return { days : days,
+           intervals : intervals
+         }
+}
+
+// returns an array of free blocks (occupied blocks are surrounded with 'timePadding')
+// TODO: externalize min time 4am and max time 22pm
+module.exports.calculateFreeBlocks = function (weekEnrch) {
   let arrFree = [ { startDate : time.timeStrToDate('04:00'), endDate : time.timeStrToDate('22:00') }];
 
-  week.days.map(d => {
+  weekEnrch.days.map(d => {
     d.terms.map(t => {
-      const startDate = time.subFromTime(time.timeStrToDate(t.start), timePadding);
-      const endDate = (t.end) ? time.addToTime(time.timeStrToDate(t.end), timePadding) 
-                              : time.addToTime(startDate, defaultDuration + 2*timePadding);
+      const startDate = time.subFromTime(t.startDate, timePadding)
+      const endDate   = time.addToTime(t.endDate, timePadding)
       const tempMap = arrFree.map(free => {
         // narrowing free interval from left
         if (free.startDate <= endDate && free.startDate >= startDate){
@@ -38,15 +88,18 @@ module.exports.calculateFreeBlocks = function (week) {
   return arrFree.map(t => { return { start : time.dateToTimeStr(t.startDate), end : time.dateToTimeStr(t.endDate) }}) 
 }
 
+// this helper function returns index of the day in an array (week)
 let getDayIndex = function (array, day) {  // returns index to the array
   return array.findIndex(a => a.day == day)
 }
 
+// this helper function returns the day structure corresponding to the day (e.g. terms)
 let getDay = function (week, day) {
   const dayObj = week.days.find(d => d.day == day)
   return (dayObj) ? dayObj : { day: day, terms: [] }
 }
 
+// this day calculates free block for a given day (where you can put new terms)
 module.exports.calculateFreeBlocksForDay = function (week, day) {
 
   let arrFree = [{ startDate : minStartTime, endDate : maxEndTime }]
@@ -56,9 +109,8 @@ module.exports.calculateFreeBlocksForDay = function (week, day) {
     const currentDayIx = getDayIndex(week.days, day)
 
     getDay(week, day).terms.map(t => {
-      const startDate = time.subFromTime(time.timeStrToDate(t.start), timePadding);
-      const endDate = (t.end) ? time.addToTime(time.timeStrToDate(t.end), timePadding) 
-                              : time.addToTime(startDate, defaultDuration + 2*timePadding)
+      const startDate = time.subFromTime(t.startDate, timePadding);
+      const endDate = time.addToTime(t.endDate, timePadding)
       let tempMap = arrFree.map(free => {
         // narrowing free interval from left
         if (free.startDate <= endDate && free.startDate >= startDate){
@@ -89,6 +141,7 @@ module.exports.calculateFreeBlocksForDay = function (week, day) {
   })  
 }
 
+// this function calculates free blocks for the given week
 module.exports.calculateFreeBlocksForWeek = function (week) {
 
   let arrFreeDays = ['po', 'ut', 'st', 'ct', 'pa', 'so', 'ne'].map(di => {
@@ -101,9 +154,9 @@ module.exports.calculateFreeBlocksForWeek = function (week) {
     const currentDayIx = getDayIndex(arrFreeDays, d.day)
     arrFree = arrFreeDays[currentDayIx].freeBlocks   // TODO: mozna cist primo a vyhodit index
     d.terms.map(t => {
-      const startDate = time.subFromTime(time.timeStrToDate(t.start), timePadding);
-      const endDate = (t.end) ? time.addToTime(time.timeStrToDate(t.end), timePadding) 
-                              : time.addToTime(startDate, defaultDuration + 2*timePadding)
+      const startDate = time.subFromTime(t.startDate, timePadding);
+      const endDate = time.addToTime(t.endDate, timePadding)
+
       let tempMap = arrFree.map(free => {
         // narrowing free interval from left
         if (free.startDate <= endDate && free.startDate >= startDate){
@@ -140,47 +193,33 @@ module.exports.calculateFreeBlocksForWeek = function (week) {
 }
 
 
-module.exports.add = function (a, b) {
-  return a + b;
-}
-
-module.exports.formatCzDate = function (date) {
-console.log(date.constructor.name);
-  return formatDate('{day}.{month}.{year}', date);
-}
-
-const min = function(date1, date2) {
-  return new Date(Math.min(date1, date2))
-}
-
-const max = function(date1, date2) {
-  return new Date(Math.max(date1, date2))
-}
 
 // converts array of timeStr ('09:30') to Date objects 01/01/1970 09:30:00.000
-let timeStrToDates = function (array) {
+// TODO: move it to utils/time.js
+/*let timeStrToDates = function (array) {
   return array.map(a => {
     return {
       startDate: time.timeStrToDate(a.start),
       endDate:   time.timeStrToDate(a.end)
     }
   })
-}
+}*/
 
 // intersections
 const defMinIntersectionDuration = 15 // the intersectuin must be long at least as this in mins
 
+// function returns intersection ???
 let getIntersection = function (intervals, freeBlocks, minIntersectionDuration) {
   if (!minIntersectionDuration)
     minIntersectionDuration = defMinIntersectionDuration
-  const idates = timeStrToDates(intervals)
+  const idates = intervals //timeStrToDates(intervals)
   const tempCol = freeBlocks.map(free => {
-    const startFree = time.timeStrToDate(free.start)
-    const endFree = time.timeStrToDate(free.end)
+    const startFree = free.startDate //time.timeStrToDate(free.start)
+    const endFree = free.endDate //time.timeStrToDate(free.end)
     return idates.map(intv => {
       if (endFree >= intv.startDate && startFree <= intv.endDate) {
-        const maxStartTime = max(startFree, intv.startDate)
-        const minEndTime = min(endFree, intv.endDate)
+        const maxStartTime = util.max(startFree, intv.startDate)
+        const minEndTime = util.min(endFree, intv.endDate)
 //console.log('max: ' + maxStartTime)
 //console.log('min: ' + minEndTime)
 //console.log('diff: ' + ((minEndTime - maxStartTime)/60000))
@@ -204,7 +243,7 @@ let getIntersection = function (intervals, freeBlocks, minIntersectionDuration) 
 
 module.exports.getIntersection = getIntersection
 
-
+// returns block in the array for the given time
 let findBlock = function (array, time) {
   return array.find(a => a.startDate <= time && a.endDate >= time)
 }
@@ -217,8 +256,9 @@ const minIntervalGap = 90      // min gap between 2 adjactment intervals
 
 // finds new interval boundaries for sliding in editor
 let getIntervalBoundaries = function (intervals, freeBlocks, minIntervalLength) {
-  const fdates = timeStrToDates(freeBlocks)
-  return timeStrToDates(intervals).map((i, ix, arr) => {
+  const fdates = freeBlocks //timeStrToDates(freeBlocks)
+//  return timeStrToDates(intervals).map((i, ix, arr) => {
+  return intervals.map((i, ix, arr) => {
     const freeStart = findBlock(fdates, i.startDate)
     if (freeStart == undefined)
       throw "Inconsisten interval/free data of start"

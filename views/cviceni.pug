@@ -8,15 +8,22 @@ block content
       a#logout(href="/logout") Odhlásit
   h1= title
   section
+    if data.editor
+    .menu.clearfix
+      .menu-item
+        a(href="/admin/tydny") Tydny
+      if session.isAdmin == true
+        .menu-item
+          a(href="/admin/uzivatele") Ucty
     h2= data.name
-    table#main-table(style = "width: " + data.weekDisplayProps.tableWidth + "px;")
+    table#main-table(style = "width: " + data.tableWidth + "px;")
       tbody
         tr.ruler
           td.day den
           td.timeline
-            each rule in data.weekDisplayProps.ruler
+            each rule in data.ruler
               .cell.inline.grid(class=rule.gap ? "grid-gap" : "", style="left: " + rule.left + "px;") #{rule.time}
-        each day in data.days
+        each day in week.days
           tr
             td.day #{day.day}
             td.timeline
@@ -116,6 +123,30 @@ block content
           p Proběhlo
           p -
       p Symboly V, R, Č, Ž zastupojí počet míst: V ... volných; R ... tebou rezervovaných; Č ... na čekací listině, Ž ... žádost o zrušení</p>
+      if data.editor
+        #ed-new-term
+          form(method='POST' action=data.editor.url)
+            .field
+              label(for="newTermStart") Zacatek
+              input(type="text",name="newTermStart")
+            .field
+              label(for="newTermDuration") Delka
+              select(name="newTermDuration")
+                each dur in data.editor.durations
+                  option(selected=dur.selected)= dur.value
+            .field
+              label(for="newTermText1") Text 1
+              input(type="text",name="newTermStart")
+            .field
+              label(for="newTermText2") Text 2
+              input(type="text",name="newTermStart")
+            .field
+              label(for="newTermCoach") Cvicici
+              select(name="newTermCoach")
+                each coach in data.editor.coaches
+                  option(value=coach.id,selected=coach.selected)= coach.name
+            .button
+              button(type="submit" name="newTerm") Uloz
       if curTerm
         if session.isAdmin
           h3 Detail termínu #{curTerm.time}

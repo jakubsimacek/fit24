@@ -1,80 +1,10 @@
 const Week = require('../models/week');
 const Account = require('../models/account');
-const util = require('../util');
-const formatDate = require('format-date');
+const svcWeek = require('../service/week');
 const CircularJSON = require('circular-json');
-
+const util = require('../util')
+const tm = require('../util/time')
 const timePadding = 15;  // adds minutes after and before each term to calculate intervals
-
-// converts string "14:45" into 14.45, ...
-/*function timeToDec(timeStr) {
-  const tParts = timeStr.split(":");
-  const hh = partseInt(tParts[0], 10);
-  const mm = partseInt(tParts[1], 10);
-  return hh * (mm/100);
-}*/
-
-// function adds the specified number of minutes to baseTime
-/*function addToTime(baseTime, minutes) {
-  const baseHours = Math.floor(baseTime);
-  const baseMins = (baseTime - baseHours) * 100;
-  const addHours = Math.floor(minutes / 60);
-  const addMins = minutes - addHours * 60;
-  const intermAdd = baseMins + addMins;
-  if (intermAdd >= 60) {
-    intermAdd -= 60;
-    addHours += 1;
-  }
-  return baseHours + addHours + (intermAdd / 100);
-}*/
-
-// function subtracts the specified number of minutes from baseTime
-/*function subFromTime(baseTime, minutes) {
-  const baseHours = Math.floor(baseTime);
-  const baseMins = (baseTime - baseHours) * 100;
-  const subtractHours = Math.floor(minutes / 60);
-  const subtractMins = minutes - subtractHours * 60;
-  const intermAdd = baseMins - addMins;
-  if (intermAdd < 0) {
-    intermAdd -= 60;
-    addHours -= 1;
-  }
-  return baseHours + addHours + (intermAdd / 100);
-}*/
-/*
-function makeTimeOccupation(week) {
-  let arrFree = [ { start : 4.00, end : 22.00 }];
-  week.days.map(d => { 
-    d.terms.map(t => {
-      const start = subFromTimeToDec(t.start, timePadding);
-      const end = (t.end) ? addToTime(timeToDec(t.end), timePadding) : addToTime(start, defaultDuration + timePadding);
-      const tempMap = arrFree.map(free => {
-        // narrowing free interval from left
-        if (free.start <= end && free.start > start)
-          return { start : end, free.end };
-        else if (free.end >= start && free.end < end)
-          return { start : free.start, end : start };
-        else if (free.start < start && free.end > end)
-          return [{ start : free.start, end : start}, { start : end, end : free.end }];
-        return { start : free.start, end : free.end };
-      }
-      arrFree = [].concat.apply([], tempMap).filter(free => {
-        return free.end > free.start + 1; // free interval valid and at least +1 hour wide
-      };
-    };
-  };
-  return arrF]ree;
-}*/
-
-/*function add(a, b) {
-  return a + b;
-}*/
-
-/*function formatCzDate(date) {
-console.log(date.constructor.name);
-  return formatDate('{day}.{month}.{year}', date);
-}*/
-
 
 
 //router.get('/admin/tyden/novy', 
@@ -88,12 +18,15 @@ module.exports.postCreateWeek = function (req, res) {
   if (!req.body.weekStartDate)
     res.render('error', {user: req.user, message: 'no start date', error: {}}); //TODO: return to add_week with an error message
   else {
+    const id = req.body.weekStartDate //.substring(0, 4) + req.body.weekStartDate.substring(5, 2) + req.body.weekStartDate.substring(7, 2)
     let newWeek = {
+      _id: id,
       state: 'new',
+      name: 'no name',
       startDate: req.body.weekStartDate,
-      endDate: 'n/a',
+      endDate: req.body.weekStartDate,  // todo: calculate correct endDate
       description: 'n/a',
-      weekDisplayProps: {
+/*      weekDisplayProps: {
         firstGap: 15,
         intermGap: 47,
         endGap: 20,
@@ -138,7 +71,16 @@ module.exports.postCreateWeek = function (req, res) {
           "from" : "16:00",
           "to"   : "19:00"
         }]
+      },*/
+      "intervals" : [
+      {
+        "start" : "06:20",
+        "end"   : "08:00"
       },
+      {
+        "start" : "16:00",
+        "end"   : "19:00"
+      }],
       days: [
       {
         day: 'po',
@@ -165,7 +107,7 @@ module.exports.postCreateWeek = function (req, res) {
       if (err)
         util.renderr(res, 'Cannot save a new week', err, newWeek);
       else
-        res.redirect('/admin/tyden/' + req.body.weekStartDate);   // TODO: check the :week
+        res.redirect('/admin/tyden/' + id);   // TODO: check the :week
     });
   }
 }
@@ -176,9 +118,27 @@ module.exports.getWeekEditor = function (req, res) {
   console.log(':week=' + CircularJSON.stringify(req.params.week));
   Week.findById(req.params.week, (err, week) => {
    if (err)
-     util.renderr(res, 'Nemuzu najit tyden', error);
+     util.renderr(res, 'Nemuzu najit tyden', err)
    else {
      console.log('admin tyden ' + week);
+     const data = svcWeek.getWeekEditor(week, function(data) {
+console.log(data)
+       res.render('cviceni', {user: req.user, 
+                              session: {
+                                userName: req.user.username, 
+                                isAdmin: true//, 
+                                //editor: editor // data editoru jsou pod data
+                              },
+                              testParams: true,
+                              week: week,
+                              data: data}
+       )
+     }, function(err) {
+       util.renderr(res, 'Service getWeekEditor returned an error', err)
+     })
+   }
+  })
+
 /* usecases:
   delete_interval: {start_time}
     G: util.getDeletabeIntervals // one must remain, must not contain terms
@@ -250,7 +210,7 @@ module.exports.getWeekEditor = function (req, res) {
      //     may be insert block???
      //     actions: insert, add, delete, resize
 //     const intervals = { };
-     const timeOccupation = util.calculateFreeBlocks(week)    
+//-     const timeOccupation = util.calculateFreeBlocks(week)    
      //
      //   locked at ...
      //   locked by ...
@@ -269,21 +229,10 @@ module.exports.getWeekEditor = function (req, res) {
      //   dto reserved
      //
      //   save buttons for each block
-     const editor = { 
+//     const editor = {  // this is uder data
 //       intervals: intervals,
-       timeOccupation: timeOccupation
-     };
-
-     res.render('cviceni', {user: req.user, 
-                            session: {
-                              userName: req.user.username, 
-                              isAdmin: true, 
-                              editor: editor
-                            },
-                            testParams: true, 
-                            data: week});
-   }
-  });
+//       timeOccupation: timeOccupation
+//     };
 }
 
 //router.post('/admin/tyden/:week/editor', 
@@ -304,36 +253,36 @@ module.exports.getAdminWeeks = function (req, res) {
     else {
 console.log('weeks:' + weeks);
       let aggWeeks = weeks.map(w => {
-        const noTerms = w.days.map(d => (d.terms) ? d.terms.length : 0).reduce(add, 0);
-        const noSections = w.weekDisplayProps.intervals.length;
+        const noTerms = w.days.map(d => (d.terms) ? d.terms.length : 0).reduce(util.add, 0);
+        const noSections = w.intervals.length;
         const capacity = w.days.map(d => {
           if (d.terms)
             return d.terms.map(t => {
-              t.capacity.reduce(add, 0);
+              t.capacity.reduce(util.add, 0);
             });
           else
             return 0;
-        }).reduce(add, 0); 
+        }).reduce(util.add, 0); 
         const noBookings = w.days.map(d => {
           if (d.terms)
             return d.terms.map(t => {
-              t.booked.count.reduce(add, 0);
+              t.booked.count.reduce(util.add, 0);
             });
           else
             return 0;
-        }).reduce(add, 0); 
+        }).reduce(util.add, 0); 
         const noReservations = w.days.map(d => {
           if (d.terms)
             return d.terms.map(t => {
-              t.reserved.count.reduce(add, 0);
+              t.reserved.count.reduce(util.add, 0);
             });
           else
             return 0;
-        }).reduce(add, 0); 
+        }).reduce(util.add, 0); 
         console.log(noTerms);
         return { id: w._id,
                  name: w.name,
-                 startDate: formatCzDate(w.startDate),
+                 startDate: tm.formatCzDate(w.startDate),
                  noTerms: noTerms,
                  noSections: noSections,
                  capacity: capacity,
